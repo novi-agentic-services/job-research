@@ -2,6 +2,7 @@ const CSV_PATH = './insurer_jobs_available.csv';
 
 const searchInput = document.getElementById('searchInput');
 const companyFilter = document.getElementById('companyFilter');
+const countryFilter = document.getElementById('countryFilter');
 const statusFilter = document.getElementById('statusFilter');
 const cardsEl = document.getElementById('cards');
 const statsEl = document.getElementById('stats');
@@ -53,6 +54,7 @@ function renderCards(data) {
       <p class="desc">${r.JobDescription || ''}</p>
       <div class="meta">
         <span class="tag">${r.Status || 'Unknown status'}</span>
+        <span class="tag">Country: ${r.Country || '-'}</span>
         <span class="tag">Checked: ${r.DateChecked || '-'}</span>
         <span class="tag">Salary: ${r['ExpectedSalary(ZAR)'] || 'Not listed'}</span>
       </div>
@@ -66,13 +68,15 @@ function renderCards(data) {
 function applyFilters() {
   const q = searchInput.value.toLowerCase().trim();
   const c = companyFilter.value;
+  const country = countryFilter.value;
   const s = statusFilter.value.toLowerCase();
   const filtered = rows.filter(r => {
-    const blob = `${r.Company} ${r.JobTitle} ${r.JobDescription}`.toLowerCase();
+    const blob = `${r.Company} ${r.JobTitle} ${r.JobDescription} ${r.Country || ''}`.toLowerCase();
     const okQ = !q || blob.includes(q);
     const okC = !c || r.Company === c;
+    const okCountry = !country || (r.Country || '') === country;
     const okS = !s || (r.Status || '').toLowerCase().includes(s);
-    return okQ && okC && okS;
+    return okQ && okC && okCountry && okS;
   });
   renderCards(filtered);
 }
@@ -85,8 +89,13 @@ async function init() {
     const opt = document.createElement('option');
     opt.value = c; opt.textContent = c; companyFilter.appendChild(opt);
   });
+  [...new Set(rows.map(r => r.Country).filter(Boolean))].sort().forEach(cn => {
+    const opt = document.createElement('option');
+    opt.value = cn; opt.textContent = cn; countryFilter.appendChild(opt);
+  });
   searchInput.addEventListener('input', applyFilters);
   companyFilter.addEventListener('change', applyFilters);
+  countryFilter.addEventListener('change', applyFilters);
   statusFilter.addEventListener('change', applyFilters);
   applyFilters();
 }
